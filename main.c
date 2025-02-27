@@ -1,43 +1,38 @@
 #include "main.h"
-#include "ColorSensor.h"
 #include "Motors.h"
+#include "ColorSensor.h"
+#include "IR-Module.h"
+
+TIM_HandleTypeDef htim2;
+
 
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_TIM2_Init(void);
 
-int main(void) {
-    HAL_Init();
-    SystemClock_Config();
-    MX_GPIO_Init();
+int main(void)
+{
 
-    // Initialize motors
-    Motors_Init();
+  HAL_Init(); 			      // Initialize the HAL Library
+  SystemClock_Config(); 	  // Configure the system clock
+  MX_GPIO_Init(); 			  // Initialize GPIO
+  MX_TIM2_Init();  			  // Initialize Timer2 for PWM
+  Motors_Init();              // Initialize motor pins
 
-    // Initialize the color sensor
-    ColorSensor_Init();
+  // Start PWM Channels for motor speed control
+      HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+      HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
 
-    while (1) {
-        // Detect the color
-        uint8_t detectedColor = ColorSensor_DetectColor();
 
-        // Perform actions based on the detected color
-        switch (detectedColor) {
-            case COLOR_RED:
-                // Action for red color
-            	Motor_Stop();
-            	HAL_Delay(3000);
-                break;
-            case COLOR_GREEN:
-                // Action for green color
-            	Motor_Move_Forward();
-                break;
-            default:
-            	Motor_Stop();
-                break;
-        }
+      // Move the car forward at 80% speed
+          Motor_Move_Forward(80);
 
-        HAL_Delay(500); // Delay for 500ms
-    }
+
+  while (1)
+  {
+	  // The car keeps moving forward indefinitely
+  }
+
 }
 
 
@@ -76,48 +71,72 @@ void SystemClock_Config(void)
   }
 }
 
-static void MX_GPIO_Init(void)
+
+static void MX_TIM2_Init(void)
 {
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
 
-  __HAL_RCC_GPIOD_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 0;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 65535;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCFastMode = TIM_OCFAST_ENABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
+  HAL_TIM_MspPostInit(&htim2);
 }
 
-/* USER CODE BEGIN 4 */
+static void MX_GPIO_Init(void)
+{
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+}
 
-/* USER CODE END 4 */
 
-/**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
 void Error_Handler(void)
 {
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)
   {
   }
-  /* USER CODE END Error_Handler_Debug */
 }
 
 #ifdef  USE_FULL_ASSERT
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
 void assert_failed(uint8_t *file, uint32_t line)
 {
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
 }
-#endif /* USE_FULL_ASSERT */
+#endif
