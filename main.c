@@ -13,11 +13,14 @@ static void MX_TIM2_Init(void);
 int main(void)
 {
 
-  HAL_Init(); 			      // Initialize the HAL Library
+  HAL_Init();		          // Initialize the HAL Library
   SystemClock_Config(); 	  // Configure the system clock
   MX_GPIO_Init(); 			  // Initialize GPIO
   MX_TIM2_Init();  			  // Initialize Timer2 for PWM
+
   Motors_Init();              // Initialize motor pins
+  ColorSensor_Init();		  // Initialize the color sensor
+  IR_Sensor_Init();           // Initialize IR sensors
 
   // Start PWM Channels for motor speed control
       HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);

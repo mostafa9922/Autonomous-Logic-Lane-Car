@@ -2,18 +2,17 @@
 #define COLORSENSOR_H
 
 #include <stdint.h>
+#include "stm32f1xx_hal.h"
+
+// Define a single macro for the sensor port
+#define SENSOR_PORT GPIOB
 
 // Pin definitions for TCS3200
-#define S0_PIN GPIO_PIN_0
-#define S0_PORT GPIOA
-#define S1_PIN GPIO_PIN_1
-#define S1_PORT GPIOA
-#define S2_PIN GPIO_PIN_2
-#define S2_PORT GPIOA
-#define S3_PIN GPIO_PIN_3
-#define S3_PORT GPIOA
-#define OUT_PIN GPIO_PIN_4
-#define OUT_PORT GPIOA
+#define S0_PIN  GPIO_PIN_6
+#define S1_PIN  GPIO_PIN_7
+#define S2_PIN  GPIO_PIN_8
+#define S3_PIN  GPIO_PIN_9
+#define OUT_PIN GPIO_PIN_10
 
 // Function prototypes
 void ColorSensor_Init(void);
