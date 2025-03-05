@@ -35,7 +35,6 @@ int main(void)
     while (1)
     {
     	Color_t detectedColor = TCS3200_DetectColor();
-
     	        if (detectedColor == COLOR_RED) {
     	            Motor_Move_Forward(50);
     	        } else if (detectedColor == COLOR_GREEN) {
@@ -46,43 +45,43 @@ int main(void)
 
     	        HAL_Delay(500); // Check color every 500ms
 
-  //	  // Read IR sensors
-  //	 	          rightIR1 = IR_Sensor1_Read();
-  //	 	          rightIR2 = IR_Sensor2_Read();
-  //	 	          leftIR1 = IR_Sensor3_Read();
-  //	 	          leftIR2 = IR_Sensor4_Read();
-  //
-  //
-  //				 if(rightIR1 == 1 || rightIR2 == 1){
-  //	 	             Motor_Turn_Left(30); // Right sensor sees black, turn left
-  //
-  //	 	         while (rightIR1 == 1 || rightIR2 == 1)
-  //	 	         {
-  //		 	          rightIR1 = IR_Sensor1_Read();
-  //		 	          rightIR2 = IR_Sensor2_Read();
-  //		 	          leftIR1 = IR_Sensor3_Read();
-  //		 	          leftIR2 = IR_Sensor4_Read();
-  //
-  //	 	         }HAL_Delay(150);
-  //
-  //					}
-  //				else if(leftIR1 == 1 || leftIR2 == 1){
-  //	 	    	 Motor_Turn_Right(30); // Left sensor sees black, turn right
-  //
-  //	         while(leftIR1 == 1 || leftIR2 == 1)
-  //	 	         {
-  //	 	          rightIR1 = IR_Sensor1_Read();
-  //	 	          rightIR2 = IR_Sensor2_Read();
-  //	 	          leftIR1 = IR_Sensor3_Read();
-  //	 	          leftIR2 = IR_Sensor4_Read();
-  //
-  //	 	         }HAL_Delay(150);
-  //
-  //}
-  //				else
-  //				{
-  //	 	             Motor_Move_Forward(40); // Both sensors see white, move forward
-  //				}
+  	  // Read IR sensors
+  	 	          rightIR1 = IR_Sensor1_Read();
+  	 	          rightIR2 = IR_Sensor2_Read();
+  	 	          leftIR1 = IR_Sensor3_Read();
+  	 	          leftIR2 = IR_Sensor4_Read();
+
+
+  				 if(rightIR1 == 1 || rightIR2 == 1){
+  	 	             Motor_Turn_Left(30); // Right sensor sees black, turn left
+
+  	 	         while (rightIR1 == 1 || rightIR2 == 1)
+  	 	         {
+  		 	          rightIR1 = IR_Sensor1_Read();
+  		 	          rightIR2 = IR_Sensor2_Read();
+  		 	          leftIR1 = IR_Sensor3_Read();
+  		 	          leftIR2 = IR_Sensor4_Read();
+
+  	 	         }HAL_Delay(150);
+
+  					}
+  				else if(leftIR1 == 1 || leftIR2 == 1){
+  	 	    	 Motor_Turn_Right(30); // Left sensor sees black, turn right
+
+  	         while(leftIR1 == 1 || leftIR2 == 1)
+  	 	         {
+  	 	          rightIR1 = IR_Sensor1_Read();
+  	 	          rightIR2 = IR_Sensor2_Read();
+  	 	          leftIR1 = IR_Sensor3_Read();
+  	 	          leftIR2 = IR_Sensor4_Read();
+
+  	 	         }HAL_Delay(150);
+
+  }
+  				else
+  				{
+  	 	             Motor_Move_Forward(40); // Both sensors see white, move forward
+  				}
     }
   }
 
