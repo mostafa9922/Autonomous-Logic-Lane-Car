@@ -79,26 +79,22 @@ void Motor_Stop(void) {
     Motor_SetSpeed(0, 0);
 }
 
-// Turn Left with Speed and Time Control
-void Motor_Turn_Left(uint16_t speed, uint32_t turn_time_ms) {
+// Turn Right with Speed and Time Control
+void Motor_Turn_Right(uint16_t speed) {
     HAL_GPIO_WritePin(MOTOR_GPIO_PORT, MOTOR_LEFT_FORWARD_PIN, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(MOTOR_GPIO_PORT, MOTOR_LEFT_BACKWARD_PIN, GPIO_PIN_SET);
     HAL_GPIO_WritePin(MOTOR_GPIO_PORT, MOTOR_RIGHT_FORWARD_PIN, GPIO_PIN_SET);
     HAL_GPIO_WritePin(MOTOR_GPIO_PORT, MOTOR_RIGHT_BACKWARD_PIN, GPIO_PIN_RESET);
 
-    Motor_SetSpeed(speed / 2, speed); // Left motor slower, right motor faster
-    HAL_Delay(turn_time_ms);
-    Motor_Stop();
+    Motor_SetSpeed(speed, speed); // Left motor slower, right motor faster
 }
 
-// Turn Right with Speed and Time Control
-void Motor_Turn_Right(uint16_t speed, uint32_t turn_time_ms) {
+// Turn Left with Speed and Time Control
+void Motor_Turn_Left(uint16_t speed) {
     HAL_GPIO_WritePin(MOTOR_GPIO_PORT, MOTOR_LEFT_FORWARD_PIN, GPIO_PIN_SET);
     HAL_GPIO_WritePin(MOTOR_GPIO_PORT, MOTOR_LEFT_BACKWARD_PIN, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(MOTOR_GPIO_PORT, MOTOR_RIGHT_FORWARD_PIN, GPIO_PIN_RESET);
     HAL_GPIO_WritePin(MOTOR_GPIO_PORT, MOTOR_RIGHT_BACKWARD_PIN, GPIO_PIN_SET);
 
-    Motor_SetSpeed(speed, speed / 2); // Right motor slower, left motor faster
-    HAL_Delay(turn_time_ms);
-    Motor_Stop();
+    Motor_SetSpeed(speed, speed); // Right motor slower, left motor faster
 }

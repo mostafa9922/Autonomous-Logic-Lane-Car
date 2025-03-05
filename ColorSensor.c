@@ -1,63 +1,74 @@
 #include "ColorSensor.h"
 
-// Initialize the color sensor pins
-void ColorSensor_Init(void) {
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    __HAL_RCC_GPIOB_CLK_ENABLE(); // Enable GPIOB clock
+extern TIM_HandleTypeDef htim1;  // Using TIM1 CH3 on PA10
 
-    // Configure S0, S1, S2, S3 as output pins
+// Initialize the TCS3200 Sensor
+void TCS3200_Init(void) {
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    // Enable GPIOA clock
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+
+    // Configure Control Pins (S0, S1, S2, S3)
     GPIO_InitStruct.Pin = S0_PIN | S1_PIN | S2_PIN | S3_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(SENSOR_PORT, &GPIO_InitStruct);
+    HAL_GPIO_Init(TCS3200_PORT, &GPIO_InitStruct);
 
-    // Configure OUT as input pin
+    // Set Frequency Scaling to 20% (S0 = HIGH, S1 = LOW)
+    HAL_GPIO_WritePin(TCS3200_PORT, S0_PIN, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(TCS3200_PORT, S1_PIN, GPIO_PIN_RESET);
+
+    // Configure Output Pin (OUT) as Input Capture on TIM1 CH3 (PA10)
     GPIO_InitStruct.Pin = OUT_PIN;
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    HAL_GPIO_Init(SENSOR_PORT, &GPIO_InitStruct);
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_INPUT;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(TCS3200_PORT, &GPIO_InitStruct);
 
-    // Set frequency scaling to 20% (S0 = HIGH, S1 = LOW)
-    HAL_GPIO_WritePin(SENSOR_PORT, S0_PIN, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(SENSOR_PORT, S1_PIN, GPIO_PIN_RESET);
+    // Enable Timer Input Capture Mode
+    HAL_TIM_IC_Start(&htim1, TIM_CHANNEL_3);
 }
 
-// Set the filter for red, green, or blue
-void ColorSensor_SetFilter(uint8_t filter) {
-    static const uint16_t filter_settings[3][2] = {
-        {GPIO_PIN_RESET, GPIO_PIN_RESET}, // Red filter
-        {GPIO_PIN_SET, GPIO_PIN_SET},     // Green filter
-        {GPIO_PIN_RESET, GPIO_PIN_SET}    // Blue filter
-    };
+// Read Frequency from Sensor
+uint32_t TCS3200_ReadFrequency(void) {
+    uint32_t start = __HAL_TIM_GET_COUNTER(&htim1);
+    HAL_Delay(10); // Small delay to get frequency sample
+    uint32_t end = __HAL_TIM_GET_COUNTER(&htim1);
 
-    HAL_GPIO_WritePin(SENSOR_PORT, S2_PIN, filter_settings[filter][0]);
-    HAL_GPIO_WritePin(SENSOR_PORT, S3_PIN, filter_settings[filter][1]);
+    return (end > start) ? (end - start) : (0xFFFF - start + end);
 }
 
-// Read the frequency from the OUT pin
-uint32_t ColorSensor_ReadFrequency(void) {
-    uint32_t count = 0;
-    uint32_t startTime = HAL_GetTick();
+// Detect Color
+Color_t TCS3200_DetectColor(void) {
+    uint32_t freq_red, freq_green, freq_blue;
 
-    while (HAL_GetTick() - startTime < 100) {
-        if (HAL_GPIO_ReadPin(SENSOR_PORT, OUT_PIN) == GPIO_PIN_SET) {
-            count++;
-            while (HAL_GPIO_ReadPin(SENSOR_PORT, OUT_PIN) == GPIO_PIN_SET); // Wait for LOW
-        }
+    // Select Red Filter (S2 = LOW, S3 = LOW)
+    HAL_GPIO_WritePin(TCS3200_PORT, S2_PIN, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(TCS3200_PORT, S3_PIN, GPIO_PIN_RESET);
+    HAL_Delay(100);
+    freq_red = TCS3200_ReadFrequency();
+
+    // Select Green Filter (S2 = HIGH, S3 = HIGH)
+    HAL_GPIO_WritePin(TCS3200_PORT, S2_PIN, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(TCS3200_PORT, S3_PIN, GPIO_PIN_SET);
+    HAL_Delay(100);
+    freq_green = TCS3200_ReadFrequency();
+
+    // Select Blue Filter (S2 = LOW, S3 = HIGH)
+    HAL_GPIO_WritePin(TCS3200_PORT, S2_PIN, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(TCS3200_PORT, S3_PIN, GPIO_PIN_SET);
+    HAL_Delay(100);
+    freq_blue = TCS3200_ReadFrequency();
+
+    // Determine Color Based on Highest Frequency
+    if (freq_red < freq_green && freq_red < freq_blue) {
+        return COLOR_RED;
+    } else if (freq_green < freq_red && freq_green < freq_blue) {
+        return COLOR_GREEN;
+    } else if (freq_blue < freq_red && freq_blue < freq_green) {
+        return COLOR_BLUE;
+    } else {
+        return COLOR_UNKNOWN;
     }
-
-    return count;
-}
-
-// Detect if the color is red or green
-uint8_t ColorSensor_DetectColor(void) {
-    ColorSensor_SetFilter(0); // Red filter
-    HAL_Delay(10);
-    uint32_t redFrequency = ColorSensor_ReadFrequency();
-
-    ColorSensor_SetFilter(1); // Green filter
-    HAL_Delay(10);
-    uint32_t greenFrequency = ColorSensor_ReadFrequency();
-
-    return (redFrequency > greenFrequency) ? COLOR_RED : (greenFrequency > redFrequency) ? COLOR_GREEN : COLOR_UNKNOWN;
 }
